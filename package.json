@@ -1,0 +1,8 @@
+{
+  "name": "json-text",
+  "version": "0.0.0",
+  "description": "RFC 8259 compliant streaming JSON parser and Web Streams for modern JavaScript",
+  "keywords": ["json", "streaming", "parser", "encoder"],
+  "license": "MIT",
+  "type": "module"
+}
