@@ -1,11 +1,11 @@
 {
   "tasks": {
-    "check": "deno check",
+    "check": "deno check && deno fmt --check",
     "bench": "deno bench",
     "dev": "deno test --watch",
     "format": "deno fmt",
-    "lint": "deno lint && deno doc --lint **/*.ts",
-    "test": "deno test --allow-all --coverage"
+    "lint": "deno lint && deno doc --lint src",
+    "test": "deno test --clean --coverage"
   },
   "exports": {
     ".": "./src/index.ts"
