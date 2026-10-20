@@ -11,8 +11,16 @@
     ".": "./src/index.ts"
   },
   "imports": {
-    "#src/": "./src/",
+    "@std/expect": "jsr:@std/expect",
     "@src/": "./src/",
-    "@std/expect": "jsr:@std/expect"
+    "#src/": "./src/"
+  },
+  "fmt": {
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "semiColons": true,
+    "singleQuote": false,
+    "spaceAround": true,
+    "useBraces": "always"
   }
 }

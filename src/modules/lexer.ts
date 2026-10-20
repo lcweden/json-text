@@ -1,15 +1,64 @@
+import { JSONPrimitiveValue, JSONStructuralCharacter } from "#src/common/types.ts";
+
 /**
  * JSON lexer for scanning whitespace and primitive tokens in UTF-8 byte arrays.
+ *
+ * @see {@link https://www.rfc-editor.org/info/rfc8259 | RFC 8259}
  */
 class Lexer {
   /** Relative byte offset from the string start for resuming string scanning. */
   #checkpoint: number;
 
   /**
-   * Initializes a new instance of the Lexer class.
+   * Initialize a new instance of the Lexer class.
    */
   constructor() {
     this.#checkpoint = 0;
+  }
+
+  /**
+   * Determine the JSON token type from its leading byte.
+   *
+   * @param byte The leading byte of the token.
+   * @returns The corresponding structural character or primitive value type, or `undefined` if unrecognized.
+   */
+  static getType(byte: number): JSONStructuralCharacter | JSONPrimitiveValue | undefined {
+    switch (byte) {
+      case 0x7B /* { */:
+        return "begin-object";
+      case 0x7D /* } */:
+        return "end-object";
+      case 0x5B /* [ */:
+        return "begin-array";
+      case 0x5D /* ] */:
+        return "end-array";
+      case 0x3A /* : */:
+        return "name-separator";
+      case 0x2C /* , */:
+        return "value-separator";
+      case 0x22 /* " */:
+        return "string";
+      case 0x74 /* t */:
+        return "true";
+      case 0x66 /* f */:
+        return "false";
+      case 0x6E /* n */:
+        return "null";
+      case 0x2D /* - */:
+      case 0x30 /* 0 */:
+      case 0x31 /* 1 */:
+      case 0x32 /* 2 */:
+      case 0x33 /* 3 */:
+      case 0x34 /* 4 */:
+      case 0x35 /* 5 */:
+      case 0x36 /* 6 */:
+      case 0x37 /* 7 */:
+      case 0x38 /* 8 */:
+      case 0x39 /* 9 */:
+        return "number";
+      default:
+        return undefined;
+    }
   }
 
   /**
@@ -23,10 +72,9 @@ class Lexer {
    *
    * @param bytes The JSON input byte array.
    * @param offset The starting position in the byte array.
-   * @returns Returns the new offset after skipping whitespace.
-   * @see {@link https://www.rfc-editor.org/info/rfc8259/#section-2 | RFC 8259}
+   * @returns The new offset after skipping whitespace.
    */
-  skipWhitespace(bytes: Uint8Array, offset: number): number {
+  static skipWhitespace(bytes: Uint8Array, offset: number): number {
     while (offset < bytes.length) {
       const byte = bytes[offset];
 
@@ -57,7 +105,6 @@ class Lexer {
    * @param bytes The JSON input byte array.
    * @param offset The starting position in the byte array.
    * @returns The number of bytes consumed, `0` if the input is incomplete, or `-1` if invalid.
-   * @see {@link https://www.rfc-editor.org/info/rfc8259/#section-3 | RFC 8259}
    */
   consumeNull(bytes: Uint8Array, offset: number): number {
     const remaining = bytes.length - offset;
@@ -103,7 +150,6 @@ class Lexer {
    * @param bytes The JSON input byte array.
    * @param offset The starting position in the byte array.
    * @returns The number of bytes consumed, `0` if the input is incomplete, or `-1` if invalid.
-   * @see {@link https://www.rfc-editor.org/info/rfc8259/#section-3 | RFC 8259}
    */
   consumeTrue(bytes: Uint8Array, offset: number): number {
     const remaining = bytes.length - offset;
@@ -149,7 +195,6 @@ class Lexer {
    * @param bytes The JSON input byte array.
    * @param offset The starting position in the byte array.
    * @returns The number of bytes consumed, `0` if the input is incomplete, or `-1` if invalid.
-   * @see {@link https://www.rfc-editor.org/info/rfc8259/#section-3 | RFC 8259}
    */
   consumeFalse(bytes: Uint8Array, offset: number): number {
     const remaining = bytes.length - offset;
@@ -204,7 +249,6 @@ class Lexer {
    * @param bytes The JSON input byte array.
    * @param offset The starting position in the byte array.
    * @returns The number of bytes consumed, `0` if the input is incomplete, or `-1` if invalid.
-   * @see {@link https://www.rfc-editor.org/info/rfc8259/#section-6 | RFC 8259}
    */
   consumeNumber(bytes: Uint8Array, offset: number): number {
     if (offset >= bytes.length) {
@@ -332,7 +376,6 @@ class Lexer {
    * @param bytes The JSON input byte array.
    * @param offset The starting position in the byte array.
    * @returns The number of bytes consumed, `0` if the input is incomplete, or `-1` if invalid.
-   * @see {@link https://www.rfc-editor.org/info/rfc8259/#section-7 | RFC 8259}
    */
   consumeString(bytes: Uint8Array, offset: number): number {
     if (offset >= bytes.length || bytes[offset] !== 0x22 /* " */) {
@@ -362,7 +405,6 @@ class Lexer {
    * @param bytes The JSON input byte array.
    * @param offset The starting position in the byte array.
    * @returns The number of bytes consumed, or `0` if incomplete or invalid.
-   * @see {@link https://www.rfc-editor.org/info/rfc8259/#section-7 | RFC 8259}
    */
   consumeStringFast(bytes: Uint8Array, offset: number): number {
     if (offset >= bytes.length || bytes[offset] !== 0x22 /* " */) {
@@ -394,7 +436,6 @@ class Lexer {
    * @param bytes The JSON input byte array.
    * @param offset The starting position in the byte array.
    * @returns The number of bytes consumed, `0` if the input is incomplete, or `-1` if invalid.
-   * @see {@link https://www.rfc-editor.org/info/rfc8259/#section-7 | RFC 8259}
    */
   consumeStringResumable(bytes: Uint8Array, offset: number): number {
     if (offset >= bytes.length || bytes[offset] !== 0x22 /* " */) {
