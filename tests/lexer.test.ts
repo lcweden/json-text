@@ -2,6 +2,36 @@ import Lexer from "@src/modules/lexer.ts";
 import { expect } from "@std/expect";
 
 Deno.test("[unit] Lexer", async ( test ) => {
+  await test.step("[scenario] get token type", async ( test ) => {
+    await test.step("[case] should identify structural characters", () => {
+      expect( Lexer.getType( 0x7B /* { */ ) ).toBe( "begin-object" );
+      expect( Lexer.getType( 0x7D /* } */ ) ).toBe( "end-object" );
+      expect( Lexer.getType( 0x5B /* [ */ ) ).toBe( "begin-array" );
+      expect( Lexer.getType( 0x5D /* ] */ ) ).toBe( "end-array" );
+      expect( Lexer.getType( 0x3A /* : */ ) ).toBe( "name-separator" );
+      expect( Lexer.getType( 0x2C /* , */ ) ).toBe( "value-separator" );
+    });
+
+    await test.step("[case] should identify primitive value leading bytes", () => {
+      expect( Lexer.getType( 0x22 /* " */ ) ).toBe( "string" );
+      expect( Lexer.getType( 0x74 /* t */ ) ).toBe( "true" );
+      expect( Lexer.getType( 0x66 /* f */ ) ).toBe( "false" );
+      expect( Lexer.getType( 0x6E /* n */ ) ).toBe( "null" );
+      expect( Lexer.getType( 0x2D /* - */ ) ).toBe( "number" );
+
+      for ( let byte = 0x30 /* 0 */; byte <= 0x39 /* 9 */; byte++ ) {
+        expect( Lexer.getType( byte ) ).toBe( "number" );
+      }
+    });
+
+    await test.step("[case] should return undefined for unrecognized bytes", () => {
+      expect( Lexer.getType( 0x20 /* [space] */ ) ).toBeUndefined();
+      expect( Lexer.getType( 0x2B /* + */ ) ).toBeUndefined();
+      expect( Lexer.getType( 0x61 /* a */ ) ).toBeUndefined();
+      expect( Lexer.getType( 0xFF ) ).toBeUndefined();
+    });
+  });
+
   await test.step("[scenario] skip whitespace", async ( test ) => {
     const encoder = new TextEncoder();
 
@@ -38,115 +68,83 @@ Deno.test("[unit] Lexer", async ( test ) => {
     });
   });
 
-  await test.step("[scenario] consume null", async ( test ) => {
+  await test.step("[scenario] consume literals", async ( test ) => {
     const lexer = new Lexer();
     const encoder = new TextEncoder();
 
-    await test.step("[case] should consume null and return length", () => {
+    await test.step("[case] should consume null, true, and false and return length", () => {
       expect( lexer.consumeNull( encoder.encode( "null" ), 0 ) ).toBe( 4 );
+      expect( lexer.consumeTrue( encoder.encode( "true" ), 0 ) ).toBe( 4 );
+      expect( lexer.consumeFalse( encoder.encode( "false" ), 0 ) ).toBe( 5 );
     });
 
     await test.step("[case] should correctly match at a non-zero offset", () => {
-      expect( lexer.consumeNull( encoder.encode( "xxnull_true_false" ), 2 ) ).toBe( 4 );
+      const input = encoder.encode( "xxnull_true_false" );
+
+      expect( lexer.consumeNull( input, 2 ) ).toBe( 4 );
+      expect( lexer.consumeTrue( input, 7 ) ).toBe( 4 );
+      expect( lexer.consumeFalse( input, 12 ) ).toBe( 5 );
     });
 
     await test.step("[case] should return 0 when prefix is valid but truncated at buffer end", () => {
       expect( lexer.consumeNull( encoder.encode( "n" ), 0 ) ).toBe( 0 );
       expect( lexer.consumeNull( encoder.encode( "nu" ), 0 ) ).toBe( 0 );
       expect( lexer.consumeNull( encoder.encode( "nul" ), 0 ) ).toBe( 0 );
-    });
 
-    await test.step("[case] should return -1 immediately if bytes deviate, even if length is insufficient", () => {
-      expect( lexer.consumeNull( encoder.encode( "nux" ), 0 ) ).toBe( -1 );
-    });
-
-    await test.step("[case] should reject uppercase or titlecase null per RFC 8259", () => {
-      expect( lexer.consumeNull( encoder.encode( "Null" ), 0 ) ).toBe( -1 );
-      expect( lexer.consumeNull( encoder.encode( "NULL" ), 0 ) ).toBe( -1 );
-    });
-
-    await test.step("[case] should only consume the exact length and ignore trailing bytes", () => {
-      expect( lexer.consumeNull( encoder.encode( "null," ), 0 ) ).toBe( 4 );
-    });
-
-    await test.step("[case] should return -1 safely when offset is at or beyond buffer length", () => {
-      expect( lexer.consumeNull( new Uint8Array( 0 ), 0 ) ).toBe( -1 );
-      expect( lexer.consumeNull( encoder.encode( "null" ), 4 ) ).toBe( -1 );
-      expect( lexer.consumeNull( encoder.encode( "null" ), 10 ) ).toBe( -1 );
-    });
-  });
-
-  await test.step("[scenario] consume true", async ( test ) => {
-    const lexer = new Lexer();
-    const encoder = new TextEncoder();
-
-    await test.step("[case] should consume true and return length", () => {
-      expect( lexer.consumeTrue( encoder.encode( "true" ), 0 ) ).toBe( 4 );
-    });
-
-    await test.step("[case] should correctly match at a non-zero offset", () => {
-      expect( lexer.consumeTrue( encoder.encode( "xxnull_true_false" ), 7 ) ).toBe( 4 );
-    });
-
-    await test.step("[case] should return 0 when prefix is valid but truncated at buffer end", () => {
       expect( lexer.consumeTrue( encoder.encode( "t" ), 0 ) ).toBe( 0 );
       expect( lexer.consumeTrue( encoder.encode( "tr" ), 0 ) ).toBe( 0 );
       expect( lexer.consumeTrue( encoder.encode( "tru" ), 0 ) ).toBe( 0 );
-    });
 
-    await test.step("[case] should return -1 immediately if bytes deviate, even if length is insufficient", () => {
-      expect( lexer.consumeTrue( encoder.encode( "nux" ), 0 ) ).toBe( -1 );
-    });
-
-    await test.step("[case] should reject uppercase or titlecase true per RFC 8259", () => {
-      expect( lexer.consumeTrue( encoder.encode( "True" ), 0 ) ).toBe( -1 );
-      expect( lexer.consumeTrue( encoder.encode( "TRUE" ), 0 ) ).toBe( -1 );
-    });
-
-    await test.step("[case] should only consume the exact length and ignore trailing bytes", () => {
-      expect( lexer.consumeTrue( encoder.encode( "true," ), 0 ) ).toBe( 4 );
-    });
-
-    await test.step("[case] should return -1 safely when offset is at or beyond buffer length", () => {
-      expect( lexer.consumeTrue( new Uint8Array( 0 ), 0 ) ).toBe( -1 );
-      expect( lexer.consumeTrue( encoder.encode( "true" ), 4 ) ).toBe( -1 );
-      expect( lexer.consumeTrue( encoder.encode( "true" ), 10 ) ).toBe( -1 );
-    });
-  });
-
-  await test.step("[scenario] consume false", async ( test ) => {
-    const lexer = new Lexer();
-    const encoder = new TextEncoder();
-
-    await test.step("[case] should consume false and return length", () => {
-      expect( lexer.consumeFalse( encoder.encode( "false" ), 0 ) ).toBe( 5 );
-    });
-
-    await test.step("[case] should correctly match at a non-zero offset", () => {
-      expect( lexer.consumeFalse( encoder.encode( "xxnull_true_false" ), 12 ) ).toBe( 5 );
-    });
-
-    await test.step("[case] should return 0 when prefix is valid but truncated at buffer end", () => {
       expect( lexer.consumeFalse( encoder.encode( "f" ), 0 ) ).toBe( 0 );
       expect( lexer.consumeFalse( encoder.encode( "fa" ), 0 ) ).toBe( 0 );
       expect( lexer.consumeFalse( encoder.encode( "fal" ), 0 ) ).toBe( 0 );
       expect( lexer.consumeFalse( encoder.encode( "fals" ), 0 ) ).toBe( 0 );
     });
 
-    await test.step("[case] should return -1 immediately if bytes deviate, even if length is insufficient", () => {
-      expect( lexer.consumeFalse( encoder.encode( "fay" ), 0 ) ).toBe( -1 );
+    await test.step("[case] should return -1 immediately if any byte deviates", () => {
+      expect( lexer.consumeNull( encoder.encode( "xull" ), 0 ) ).toBe( -1 );
+      expect( lexer.consumeNull( encoder.encode( "nxll" ), 0 ) ).toBe( -1 );
+      expect( lexer.consumeNull( encoder.encode( "nuxl" ), 0 ) ).toBe( -1 );
+      expect( lexer.consumeNull( encoder.encode( "nulx" ), 0 ) ).toBe( -1 );
+
+      expect( lexer.consumeTrue( encoder.encode( "xrue" ), 0 ) ).toBe( -1 );
+      expect( lexer.consumeTrue( encoder.encode( "txue" ), 0 ) ).toBe( -1 );
+      expect( lexer.consumeTrue( encoder.encode( "trxe" ), 0 ) ).toBe( -1 );
+      expect( lexer.consumeTrue( encoder.encode( "trux" ), 0 ) ).toBe( -1 );
+
+      expect( lexer.consumeFalse( encoder.encode( "xalse" ), 0 ) ).toBe( -1 );
+      expect( lexer.consumeFalse( encoder.encode( "fxlse" ), 0 ) ).toBe( -1 );
+      expect( lexer.consumeFalse( encoder.encode( "faxse" ), 0 ) ).toBe( -1 );
+      expect( lexer.consumeFalse( encoder.encode( "falxe" ), 0 ) ).toBe( -1 );
+      expect( lexer.consumeFalse( encoder.encode( "falsx" ), 0 ) ).toBe( -1 );
     });
 
-    await test.step("[case] should reject uppercase or titlecase false per RFC 8259", () => {
+    await test.step("[case] should reject uppercase or titlecase literals per RFC 8259", () => {
+      expect( lexer.consumeNull( encoder.encode( "Null" ), 0 ) ).toBe( -1 );
+      expect( lexer.consumeNull( encoder.encode( "NULL" ), 0 ) ).toBe( -1 );
+
+      expect( lexer.consumeTrue( encoder.encode( "True" ), 0 ) ).toBe( -1 );
+      expect( lexer.consumeTrue( encoder.encode( "TRUE" ), 0 ) ).toBe( -1 );
+
       expect( lexer.consumeFalse( encoder.encode( "False" ), 0 ) ).toBe( -1 );
       expect( lexer.consumeFalse( encoder.encode( "FALSE" ), 0 ) ).toBe( -1 );
     });
 
     await test.step("[case] should only consume the exact length and ignore trailing bytes", () => {
+      expect( lexer.consumeNull( encoder.encode( "null," ), 0 ) ).toBe( 4 );
+      expect( lexer.consumeTrue( encoder.encode( "true," ), 0 ) ).toBe( 4 );
       expect( lexer.consumeFalse( encoder.encode( "false," ), 0 ) ).toBe( 5 );
     });
 
     await test.step("[case] should return -1 safely when offset is at or beyond buffer length", () => {
+      expect( lexer.consumeNull( new Uint8Array( 0 ), 0 ) ).toBe( -1 );
+      expect( lexer.consumeNull( encoder.encode( "null" ), 4 ) ).toBe( -1 );
+      expect( lexer.consumeNull( encoder.encode( "null" ), 10 ) ).toBe( -1 );
+
+      expect( lexer.consumeTrue( new Uint8Array( 0 ), 0 ) ).toBe( -1 );
+      expect( lexer.consumeTrue( encoder.encode( "true" ), 4 ) ).toBe( -1 );
+      expect( lexer.consumeTrue( encoder.encode( "true" ), 10 ) ).toBe( -1 );
+
       expect( lexer.consumeFalse( new Uint8Array( 0 ), 0 ) ).toBe( -1 );
       expect( lexer.consumeFalse( encoder.encode( "false" ), 5 ) ).toBe( -1 );
       expect( lexer.consumeFalse( encoder.encode( "false" ), 10 ) ).toBe( -1 );

@@ -22,8 +22,8 @@ class Lexer {
    * @param byte The leading byte of the token.
    * @returns The corresponding structural character or primitive value type, or `undefined` if unrecognized.
    */
-  static getType(byte: number): JSONStructuralCharacter | JSONPrimitiveValue | undefined {
-    switch (byte) {
+  static getType( byte: number ): JSONStructuralCharacter | JSONPrimitiveValue | undefined {
+    switch ( byte ) {
       case 0x7B /* { */:
         return "begin-object";
       case 0x7D /* } */:
@@ -74,13 +74,13 @@ class Lexer {
    * @param offset The starting position in the byte array.
    * @returns The new offset after skipping whitespace.
    */
-  static skipWhitespace(bytes: Uint8Array, offset: number): number {
-    while (offset < bytes.length) {
+  static skipWhitespace( bytes: Uint8Array, offset: number ): number {
+    while ( offset < bytes.length ) {
       const byte = bytes[offset];
 
       // Fast path:
       // if the byte is greater than space, it's not whitespace.
-      if (byte > 0x20 /* [space] */) {
+      if ( byte > 0x20 /* [space] */ ) {
         break;
       }
 
@@ -106,38 +106,38 @@ class Lexer {
    * @param offset The starting position in the byte array.
    * @returns The number of bytes consumed, `0` if the input is incomplete, or `-1` if invalid.
    */
-  consumeNull(bytes: Uint8Array, offset: number): number {
+  consumeNull( bytes: Uint8Array, offset: number ): number {
     const remaining = bytes.length - offset;
 
-    if (remaining <= 0) {
+    if ( remaining <= 0 ) {
       return -1;
     }
 
-    if (bytes[offset] !== 0x6E /* n */) {
+    if ( bytes[offset] !== 0x6E /* n */ ) {
       return -1;
     }
 
-    if (remaining === 1) {
+    if ( remaining === 1 ) {
       return 0;
     }
 
-    if (bytes[offset + 1] !== 0x75 /* u */) {
+    if ( bytes[offset + 1] !== 0x75 /* u */ ) {
       return -1;
     }
 
-    if (remaining === 2) {
+    if ( remaining === 2 ) {
       return 0;
     }
 
-    if (bytes[offset + 2] !== 0x6C /* l */) {
+    if ( bytes[offset + 2] !== 0x6C /* l */ ) {
       return -1;
     }
 
-    if (remaining === 3) {
+    if ( remaining === 3 ) {
       return 0;
     }
 
-    if (bytes[offset + 3] !== 0x6C /* l */) {
+    if ( bytes[offset + 3] !== 0x6C /* l */ ) {
       return -1;
     }
 
@@ -151,38 +151,38 @@ class Lexer {
    * @param offset The starting position in the byte array.
    * @returns The number of bytes consumed, `0` if the input is incomplete, or `-1` if invalid.
    */
-  consumeTrue(bytes: Uint8Array, offset: number): number {
+  consumeTrue( bytes: Uint8Array, offset: number ): number {
     const remaining = bytes.length - offset;
 
-    if (remaining <= 0) {
+    if ( remaining <= 0 ) {
       return -1;
     }
 
-    if (bytes[offset] !== 0x74 /* t */) {
+    if ( bytes[offset] !== 0x74 /* t */ ) {
       return -1;
     }
 
-    if (remaining === 1) {
+    if ( remaining === 1 ) {
       return 0;
     }
 
-    if (bytes[offset + 1] !== 0x72 /* r */) {
+    if ( bytes[offset + 1] !== 0x72 /* r */ ) {
       return -1;
     }
 
-    if (remaining === 2) {
+    if ( remaining === 2 ) {
       return 0;
     }
 
-    if (bytes[offset + 2] !== 0x75 /* u */) {
+    if ( bytes[offset + 2] !== 0x75 /* u */ ) {
       return -1;
     }
 
-    if (remaining === 3) {
+    if ( remaining === 3 ) {
       return 0;
     }
 
-    if (bytes[offset + 3] !== 0x65 /* e */) {
+    if ( bytes[offset + 3] !== 0x65 /* e */ ) {
       return -1;
     }
 
@@ -196,46 +196,46 @@ class Lexer {
    * @param offset The starting position in the byte array.
    * @returns The number of bytes consumed, `0` if the input is incomplete, or `-1` if invalid.
    */
-  consumeFalse(bytes: Uint8Array, offset: number): number {
+  consumeFalse( bytes: Uint8Array, offset: number ): number {
     const remaining = bytes.length - offset;
 
-    if (remaining <= 0) {
+    if ( remaining <= 0 ) {
       return -1;
     }
 
-    if (bytes[offset] !== 0x66 /* f */) {
+    if ( bytes[offset] !== 0x66 /* f */ ) {
       return -1;
     }
 
-    if (remaining === 1) {
+    if ( remaining === 1 ) {
       return 0;
     }
 
-    if (bytes[offset + 1] !== 0x61 /* a */) {
+    if ( bytes[offset + 1] !== 0x61 /* a */ ) {
       return -1;
     }
 
-    if (remaining === 2) {
+    if ( remaining === 2 ) {
       return 0;
     }
 
-    if (bytes[offset + 2] !== 0x6C /* l */) {
+    if ( bytes[offset + 2] !== 0x6C /* l */ ) {
       return -1;
     }
 
-    if (remaining === 3) {
+    if ( remaining === 3 ) {
       return 0;
     }
 
-    if (bytes[offset + 3] !== 0x73 /* s */) {
+    if ( bytes[offset + 3] !== 0x73 /* s */ ) {
       return -1;
     }
 
-    if (remaining === 4) {
+    if ( remaining === 4 ) {
       return 0;
     }
 
-    if (bytes[offset + 4] !== 0x65 /* e */) {
+    if ( bytes[offset + 4] !== 0x65 /* e */ ) {
       return -1;
     }
 
@@ -250,22 +250,22 @@ class Lexer {
    * @param offset The starting position in the byte array.
    * @returns The number of bytes consumed, `0` if the input is incomplete, or `-1` if invalid.
    */
-  consumeNumber(bytes: Uint8Array, offset: number): number {
-    if (offset >= bytes.length) {
+  consumeNumber( bytes: Uint8Array, offset: number ): number {
+    if ( offset >= bytes.length ) {
       return 0;
     }
 
     let index = offset;
 
-    if (bytes[index] === 0x2D /* - */) {
+    if ( bytes[index] === 0x2D /* - */ ) {
       index++;
 
-      if (index >= bytes.length) {
+      if ( index >= bytes.length ) {
         return 0;
       }
     }
 
-    if (bytes[index] === 0x30 /* 0 */) {
+    if ( bytes[index] === 0x30 /* 0 */ ) {
       index++;
 
       if (
@@ -292,7 +292,7 @@ class Lexer {
       return -1;
     }
 
-    if (index >= bytes.length) {
+    if ( index >= bytes.length ) {
       return index - offset;
     }
 
@@ -304,10 +304,10 @@ class Lexer {
       return index - offset;
     }
 
-    if (bytes[index] === 0x2E /* . */) {
+    if ( bytes[index] === 0x2E /* . */ ) {
       index++;
 
-      if (index >= bytes.length) {
+      if ( index >= bytes.length ) {
         return 0;
       }
 
@@ -336,7 +336,7 @@ class Lexer {
     ) {
       index++;
 
-      if (index >= bytes.length) {
+      if ( index >= bytes.length ) {
         return 0;
       }
 
@@ -346,7 +346,7 @@ class Lexer {
       ) {
         index++;
 
-        if (index >= bytes.length) {
+        if ( index >= bytes.length ) {
           return 0;
         }
       }
@@ -377,26 +377,33 @@ class Lexer {
    * @param offset The starting position in the byte array.
    * @returns The number of bytes consumed, `0` if the input is incomplete, or `-1` if invalid.
    */
-  consumeString(bytes: Uint8Array, offset: number): number {
-    if (offset >= bytes.length || bytes[offset] !== 0x22 /* " */) {
-      return (this.#checkpoint = 0, -1);
+  consumeString( bytes: Uint8Array, offset: number ): number {
+    if ( offset >= bytes.length || bytes[offset] !== 0x22 /* " */ ) {
+      return ( this.#checkpoint = 0, -1 );
     }
 
-    if (this.#checkpoint === 0) {
-      const consumed = this.consumeStringFast(bytes, offset);
+    if ( this.#checkpoint === 0 ) {
+      const consumed = this.#consumeStringFast( bytes, offset );
 
-      if (consumed !== 0) {
+      if ( consumed !== 0 ) {
         return consumed;
       }
     }
 
-    const consumed = this.consumeStringResumable(bytes, offset);
+    const consumed = this.#consumeStringResumable( bytes, offset );
 
-    if (consumed !== 0) {
+    if ( consumed !== 0 ) {
       this.#checkpoint = 0;
     }
 
     return consumed;
+  }
+
+  /**
+   * Reset the lexer state, clearing any stored checkpoint.
+   */
+  reset(): void {
+    this.#checkpoint = 0;
   }
 
   /**
@@ -406,15 +413,11 @@ class Lexer {
    * @param offset The starting position in the byte array.
    * @returns The number of bytes consumed, or `0` if incomplete or invalid.
    */
-  consumeStringFast(bytes: Uint8Array, offset: number): number {
-    if (offset >= bytes.length || bytes[offset] !== 0x22 /* " */) {
-      return 0;
-    }
-
-    for (let index = offset + 1; index < bytes.length; index++) {
+  #consumeStringFast( bytes: Uint8Array, offset: number ): number {
+    for ( let index = offset + 1; index < bytes.length; index++ ) {
       const byte = bytes[index];
 
-      if (byte === 0x22 /* " */) {
+      if ( byte === 0x22 /* " */ ) {
         return index - offset + 1;
       }
 
@@ -437,45 +440,41 @@ class Lexer {
    * @param offset The starting position in the byte array.
    * @returns The number of bytes consumed, `0` if the input is incomplete, or `-1` if invalid.
    */
-  consumeStringResumable(bytes: Uint8Array, offset: number): number {
-    if (offset >= bytes.length || bytes[offset] !== 0x22 /* " */) {
-      return -1;
-    }
-
+  #consumeStringResumable( bytes: Uint8Array, offset: number ): number {
     const start = this.#checkpoint;
     let index = start > 0 ? offset + start : offset + 1;
 
-    for (; index < bytes.length; index++) {
+    for ( ; index < bytes.length; index++ ) {
       const byte = bytes[index];
 
-      if (byte < 0x20 /* [space] */) {
+      if ( byte < 0x20 /* [space] */ ) {
         return -1;
       }
 
-      if (byte === 0x22 /* " */) {
+      if ( byte === 0x22 /* " */ ) {
         return index - offset + 1;
       }
 
-      if (byte === 0x5C /* \ */) {
-        if (index + 1 >= bytes.length) {
-          return (this.#checkpoint = index - offset, 0);
+      if ( byte === 0x5C /* \ */ ) {
+        if ( index + 1 >= bytes.length ) {
+          return ( this.#checkpoint = index - offset, 0 );
         }
 
         const next = bytes[index + 1];
 
-        if (next === 0x75 /* u */) {
-          if (index + 5 >= bytes.length) {
-            return (this.#checkpoint = index - offset, 0);
+        if ( next === 0x75 /* u */ ) {
+          if ( index + 5 >= bytes.length ) {
+            return ( this.#checkpoint = index - offset, 0 );
           }
 
-          for (let count = 2; count <= 5; count++) {
+          for ( let count = 2; count <= 5; count++ ) {
             const hex = bytes[index + count];
 
             if (
               !(
-                (hex >= 0x30 /* 0 */ && hex <= 0x39 /* 9 */) ||
-                (hex >= 0x61 /* a */ && hex <= 0x66 /* f */) ||
-                (hex >= 0x41 /* A */ && hex <= 0x46 /* F */)
+                ( hex >= 0x30 /* 0 */ && hex <= 0x39 /* 9 */ ) ||
+                ( hex >= 0x61 /* a */ && hex <= 0x66 /* f */ ) ||
+                ( hex >= 0x41 /* A */ && hex <= 0x46 /* F */ )
               )
             ) {
               return -1;
@@ -506,14 +505,7 @@ class Lexer {
       }
     }
 
-    return (this.#checkpoint = bytes.length - offset, 0);
-  }
-
-  /**
-   * Reset the lexer state, clearing any stored checkpoint.
-   */
-  reset(): void {
-    this.#checkpoint = 0;
+    return ( this.#checkpoint = bytes.length - offset, 0 );
   }
 }
 
