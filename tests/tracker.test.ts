@@ -7,8 +7,8 @@ Deno.test("[unit] tracker", async ( test ) => {
       const tracker = new Tracker();
 
       expect( tracker.depth ).toBe( 0 );
-      expect( tracker.lastName ).toBe( "" );
-      expect( tracker.getName( 0 ) ).toBe( "" );
+      expect( tracker.name ).toBe( "" );
+      expect( tracker.at( 0 ) ).toBe( "" );
     });
 
     await test.step("[case] should safely ignore pop when depth is 0", () => {
@@ -17,7 +17,7 @@ Deno.test("[unit] tracker", async ( test ) => {
       tracker.pop();
 
       expect( tracker.depth ).toBe( 0 );
-      expect( tracker.lastName ).toBe( "" );
+      expect( tracker.name ).toBe( "" );
     });
 
     await test.step("[case] should reset active scopes and depth", () => {
@@ -25,26 +25,26 @@ Deno.test("[unit] tracker", async ( test ) => {
 
       tracker.push();
 
-      expect( tracker.setName( "a", true ) ).toBe( true );
+      expect( tracker.add( "a", true ) ).toBe( true );
 
       tracker.push();
 
-      expect( tracker.setName( "b", true ) ).toBe( true );
+      expect( tracker.add( "b", true ) ).toBe( true );
       expect( tracker.depth ).toBe( 2 );
-      expect( tracker.lastName ).toBe( "b" );
+      expect( tracker.name ).toBe( "b" );
 
       tracker.reset();
 
       expect( tracker.depth ).toBe( 0 );
-      expect( tracker.lastName ).toBe( "" );
+      expect( tracker.name ).toBe( "" );
 
       tracker.push();
 
-      expect( tracker.setName( "a", true ) ).toBe( true );
+      expect( tracker.add( "a", true ) ).toBe( true );
 
       tracker.push();
 
-      expect( tracker.setName( "b", true ) ).toBe( true );
+      expect( tracker.add( "b", true ) ).toBe( true );
     });
   });
 
@@ -55,18 +55,18 @@ Deno.test("[unit] tracker", async ( test ) => {
       tracker.push();
 
       expect( tracker.depth ).toBe( 1 );
-      expect( tracker.lastName ).toBe( "" );
+      expect( tracker.name ).toBe( "" );
 
-      expect( tracker.setName( "first", true ) ).toBe( true );
-      expect( tracker.lastName ).toBe( "first" );
-      expect( tracker.getName( 0 ) ).toBe( "first" );
+      expect( tracker.add( "first", true ) ).toBe( true );
+      expect( tracker.name ).toBe( "first" );
+      expect( tracker.at( 0 ) ).toBe( "first" );
 
-      expect( tracker.setName( "second", true ) ).toBe( true );
-      expect( tracker.lastName ).toBe( "second" );
-      expect( tracker.getName( 0 ) ).toBe( "second" );
+      expect( tracker.add( "second", true ) ).toBe( true );
+      expect( tracker.name ).toBe( "second" );
+      expect( tracker.at( 0 ) ).toBe( "second" );
 
-      expect( tracker.setName( "first", true ) ).toBe( false );
-      expect( tracker.lastName ).toBe( "first" );
+      expect( tracker.add( "first", true ) ).toBe( false );
+      expect( tracker.name ).toBe( "first" );
     });
 
     await test.step("[case] should allow duplicate names when unique is false", () => {
@@ -74,9 +74,9 @@ Deno.test("[unit] tracker", async ( test ) => {
 
       tracker.push();
 
-      expect( tracker.setName( "dup", false ) ).toBe( true );
-      expect( tracker.setName( "dup", false ) ).toBe( true );
-      expect( tracker.lastName ).toBe( "dup" );
+      expect( tracker.add( "dup", false ) ).toBe( true );
+      expect( tracker.add( "dup", false ) ).toBe( true );
+      expect( tracker.name ).toBe( "dup" );
     });
 
     await test.step("[case] should isolate scopes across nested objects and reuse cleared sets after pop", () => {
@@ -84,27 +84,27 @@ Deno.test("[unit] tracker", async ( test ) => {
 
       tracker.push();
 
-      expect( tracker.setName( "shared", true ) ).toBe( true );
+      expect( tracker.add( "shared", true ) ).toBe( true );
 
       tracker.push();
 
       expect( tracker.depth ).toBe( 2 );
-      expect( tracker.lastName ).toBe( "" );
-      expect( tracker.setName( "shared", true ) ).toBe( true );
-      expect( tracker.setName( "inner", true ) ).toBe( true );
-      expect( tracker.getName( 0 ) ).toBe( "shared" );
-      expect( tracker.getName( 1 ) ).toBe( "inner" );
+      expect( tracker.name ).toBe( "" );
+      expect( tracker.add( "shared", true ) ).toBe( true );
+      expect( tracker.add( "inner", true ) ).toBe( true );
+      expect( tracker.at( 0 ) ).toBe( "shared" );
+      expect( tracker.at( 1 ) ).toBe( "inner" );
 
       tracker.pop();
 
       expect( tracker.depth ).toBe( 1 );
-      expect( tracker.lastName ).toBe( "shared" );
-      expect( tracker.setName( "shared", true ) ).toBe( false );
+      expect( tracker.name ).toBe( "shared" );
+      expect( tracker.add( "shared", true ) ).toBe( false );
 
       tracker.push();
 
       expect( tracker.depth ).toBe( 2 );
-      expect( tracker.setName( "inner", true ) ).toBe( true );
+      expect( tracker.add( "inner", true ) ).toBe( true );
 
       tracker.pop();
       tracker.pop();

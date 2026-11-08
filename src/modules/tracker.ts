@@ -38,33 +38,8 @@ class Tracker {
   /**
    * Get the most recently recorded property name in the current object scope, or `""` if none.
    */
-  get lastName(): string {
+  get name(): string {
     return this.#depth > 0 ? this.#names[this.#depth - 1] : "";
-  }
-
-  /**
-   * Enter a new object scope, allocating or reusing a property name set for the new depth.
-   */
-  push(): void {
-    this.#names[this.#depth] = "";
-
-    if ( this.#depth >= this.#scopes.length ) {
-      this.#scopes.push( new Set() );
-    }
-
-    this.#depth++;
-  }
-
-  /**
-   * Exit the current object scope and clear its recorded property names.
-   */
-  pop(): void {
-    if ( this.#depth === 0 ) {
-      return;
-    }
-
-    this.#depth--;
-    this.#scopes[this.#depth].clear();
   }
 
   /**
@@ -74,7 +49,7 @@ class Tracker {
    * @param unique Whether to enforce uniqueness within the current object scope.
    * @returns `true` if the property name is accepted, or `false` if `unique` is enabled and the name already exists.
    */
-  setName( name: string, unique: boolean ): boolean {
+  add( name: string, unique: boolean ): boolean {
     const index = this.#depth - 1;
 
     this.#names[index] = name;
@@ -100,8 +75,33 @@ class Tracker {
    * @param depth The 0-based object depth index.
    * @returns The property name at `depth`, or `""` if not set.
    */
-  getName( depth: number ): string {
+  at( depth: number ): string {
     return this.#names[depth] ?? "";
+  }
+
+  /**
+   * Enter a new object scope, allocating or reusing a property name set for the new depth.
+   */
+  push(): void {
+    this.#names[this.#depth] = "";
+
+    if ( this.#depth >= this.#scopes.length ) {
+      this.#scopes.push( new Set() );
+    }
+
+    this.#depth++;
+  }
+
+  /**
+   * Exit the current object scope and clear its recorded property names.
+   */
+  pop(): void {
+    if ( this.#depth === 0 ) {
+      return;
+    }
+
+    this.#depth--;
+    this.#scopes[this.#depth].clear();
   }
 
   /**
