@@ -467,8 +467,8 @@ class Lexer {
             return ( this.#checkpoint = index - offset, 0 );
           }
 
-          for ( let count = 2; count <= 5; count++ ) {
-            const hex = bytes[index + count];
+          for ( let step = 2; step <= 5; step++ ) {
+            const hex = bytes[index + step];
 
             if (
               !(

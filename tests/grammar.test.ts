@@ -3,7 +3,7 @@ import { expect } from "@std/expect";
 
 Deno.test("[unit] grammar", async ( test ) => {
   await test.step("[scenario] top-level scalar value lifecycle", () => {
-    const grammar = new Grammar( 1 );
+    const grammar = new Grammar();
 
     expect( grammar.depth ).toBe( 0 );
     expect( grammar.ended ).toBe( false );
@@ -39,7 +39,7 @@ Deno.test("[unit] grammar", async ( test ) => {
   });
 
   await test.step("[scenario] array lifecycle, step transitions, and index tracking", () => {
-    const grammar = new Grammar( 1 );
+    const grammar = new Grammar();
 
     grammar.stepBeginArray();
 
@@ -72,7 +72,7 @@ Deno.test("[unit] grammar", async ( test ) => {
   });
 
   await test.step("[scenario] empty array handling", () => {
-    const grammar = new Grammar( 1 );
+    const grammar = new Grammar();
 
     grammar.stepBeginArray();
 
@@ -85,7 +85,7 @@ Deno.test("[unit] grammar", async ( test ) => {
   });
 
   await test.step("[scenario] array syntax violations", () => {
-    const grammar = new Grammar( 1 );
+    const grammar = new Grammar();
 
     grammar.stepBeginArray();
     grammar.stepValue();
@@ -137,7 +137,7 @@ Deno.test("[unit] grammar", async ( test ) => {
   });
 
   await test.step("[scenario] object lifecycle and 4-phase micro-steps", () => {
-    const grammar = new Grammar( 1 );
+    const grammar = new Grammar();
 
     grammar.stepBeginObject();
 
@@ -181,7 +181,7 @@ Deno.test("[unit] grammar", async ( test ) => {
   });
 
   await test.step("[scenario] empty object handling", () => {
-    const grammar = new Grammar( 1 );
+    const grammar = new Grammar();
 
     grammar.stepBeginObject();
 
@@ -194,7 +194,7 @@ Deno.test("[unit] grammar", async ( test ) => {
   });
 
   await test.step("[scenario] object syntax violations", () => {
-    const grammar = new Grammar( 1 );
+    const grammar = new Grammar();
 
     grammar.stepBeginObject();
 
@@ -307,7 +307,7 @@ Deno.test("[unit] grammar", async ( test ) => {
   });
 
   await test.step("[scenario] nested structures and parent stack restoration", () => {
-    const grammar = new Grammar( 4 );
+    const grammar = new Grammar();
 
     grammar.stepBeginObject();
 
@@ -373,40 +373,6 @@ Deno.test("[unit] grammar", async ( test ) => {
     expect( grammar.step ).toBe( 4 );
 
     grammar.stepEndObject();
-
-    expect( grammar.depth ).toBe( 0 );
-    expect( grammar.ended ).toBe( true );
-  });
-
-  await test.step("[scenario] maximum nesting depth enforcement", () => {
-    const grammar = new Grammar( 2 );
-
-    grammar.stepBeginArray();
-    grammar.stepBeginObject();
-
-    expect( grammar.depth ).toBe( 2 );
-
-    grammar.stepName();
-    grammar.stepNameSeparator();
-
-    expect( () => grammar.stepBeginArray() )
-      .toThrow( RangeError );
-
-    expect( () => grammar.stepBeginObject() )
-      .toThrow( "Maximum nesting depth exceeded" );
-
-    grammar.stepValue();
-    grammar.stepEndObject();
-
-    expect( grammar.depth ).toBe( 1 );
-
-    grammar.stepValueSeparator();
-    grammar.stepBeginArray();
-
-    expect( grammar.depth ).toBe( 2 );
-
-    grammar.stepEndArray();
-    grammar.stepEndArray();
 
     expect( grammar.depth ).toBe( 0 );
     expect( grammar.ended ).toBe( true );

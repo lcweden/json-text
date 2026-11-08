@@ -1,7 +1,7 @@
 import Lexer from "@src/modules/lexer.ts";
 import { expect } from "@std/expect";
 
-Deno.test("[unit] Lexer", async ( test ) => {
+Deno.test("[unit] lexer", async ( test ) => {
   await test.step("[scenario] get token type", async ( test ) => {
     await test.step("[case] should identify structural characters", () => {
       expect( Lexer.getType( 0x7B /* { */ ) ).toBe( "begin-object" );

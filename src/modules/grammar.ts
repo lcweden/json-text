@@ -2,6 +2,8 @@ import { JSONReferenceValue } from "#src/common/types.ts";
 
 /**
  * JSON grammar pushdown automaton.
+ *
+ * @see {@link https://www.rfc-editor.org/info/rfc8259 | RFC 8259}
  */
 class Grammar {
   /**
@@ -15,24 +17,16 @@ class Grammar {
   #ended: boolean;
 
   /**
-   * The maximum allowed nesting depth of arrays and objects.
-   */
-  #max: number;
-
-  /**
    * The stack of previous state counters.
    */
   #stack: number[];
 
   /**
    * Initialize a new instance of the Grammar class.
-   *
-   * @param max The maximum allowed nesting depth of arrays and objects.
    */
-  constructor( max: number ) {
+  constructor() {
     this.#current = 0;
     this.#ended = false;
-    this.#max = max;
     this.#stack = [];
   }
 
@@ -54,7 +48,7 @@ class Grammar {
    * Get the current index within the current array, or `-1` if not in an array.
    */
   get index(): number {
-    return this.#current > 0 ? ( this.#current - 1 ) >> 1 : -1;
+    return this.#current > 0 ? this.#current - 1 >> 1 : -1;
   }
 
   /**
@@ -72,7 +66,7 @@ class Grammar {
    */
   get step(): 1 | 2 | 3 | 4 | undefined {
     if ( this.#current > 0 ) {
-      return ( ( ( this.#current - 1 ) & 1 ) + 1 ) as 1 | 2;
+      return ( ( this.#current - 1 & 1 ) + 1 ) as 1 | 2;
     }
 
     if ( this.#current < 0 ) {
@@ -109,7 +103,6 @@ class Grammar {
   /**
    * Advance the grammar state for an opening array bracket (`[`).
    *
-   * @throws {RangeError} If the maximum nesting depth is exceeded.
    * @throws {SyntaxError} If an array cannot begin in the current grammar state.
    */
   stepBeginArray(): void {
@@ -118,33 +111,25 @@ class Grammar {
     }
 
     if ( this.#current > 0 ) {
-      const count = this.#current - 1;
-
-      if ( ( count & 1 ) !== 0 ) {
+      if ( ( this.#current - 1 & 1 ) !== 0 ) {
         throw new SyntaxError( "Expected ',' or ']' after array element" );
       }
     } else if ( this.#current < 0 ) {
-      const count = ~this.#current;
-
-      if ( count === 0 ) {
+      if ( ~this.#current === 0 ) {
         throw new SyntaxError( "Expected property name or '}'" );
       }
 
-      if ( count % 4 === 0 ) {
+      if ( ( ~this.#current & 3 ) === 0 ) {
         throw new SyntaxError( "Expected double-quoted property name" );
       }
 
-      if ( count % 4 === 1 ) {
+      if ( ( ~this.#current & 3 ) === 1 ) {
         throw new SyntaxError( "Expected ':' after property name in object" );
       }
 
-      if ( count % 4 === 3 ) {
+      if ( ( ~this.#current & 3 ) === 3 ) {
         throw new SyntaxError( "Expected ',' or '}' after property value in object" );
       }
-    }
-
-    if ( this.#stack.length >= this.#max ) {
-      throw new RangeError( "Maximum nesting depth exceeded" );
     }
 
     this.#stack.push( this.#current );
@@ -154,7 +139,6 @@ class Grammar {
   /**
    * Advance the grammar state for an opening object brace (`{`).
    *
-   * @throws {RangeError} If the maximum nesting depth is exceeded.
    * @throws {SyntaxError} If an object cannot begin in the current grammar state.
    */
   stepBeginObject(): void {
@@ -163,33 +147,25 @@ class Grammar {
     }
 
     if ( this.#current > 0 ) {
-      const count = this.#current - 1;
-
-      if ( ( count & 1 ) !== 0 ) {
+      if ( ( this.#current - 1 & 1 ) !== 0 ) {
         throw new SyntaxError( "Expected ',' or ']' after array element" );
       }
     } else if ( this.#current < 0 ) {
-      const count = ~this.#current;
-
-      if ( count === 0 ) {
+      if ( ~this.#current === 0 ) {
         throw new SyntaxError( "Expected property name or '}'" );
       }
 
-      if ( count % 4 === 0 ) {
+      if ( ( ~this.#current & 3 ) === 0 ) {
         throw new SyntaxError( "Expected double-quoted property name" );
       }
 
-      if ( count % 4 === 1 ) {
+      if ( ( ~this.#current & 3 ) === 1 ) {
         throw new SyntaxError( "Expected ':' after property name in object" );
       }
 
-      if ( count % 4 === 3 ) {
+      if ( ( ~this.#current & 3 ) === 3 ) {
         throw new SyntaxError( "Expected ',' or '}' after property value in object" );
       }
-    }
-
-    if ( this.#stack.length >= this.#max ) {
-      throw new RangeError( "Maximum nesting depth exceeded" );
     }
 
     this.#stack.push( this.#current );
@@ -206,9 +182,7 @@ class Grammar {
       throw new SyntaxError( "Unexpected character" );
     }
 
-    const count = this.#current - 1;
-
-    if ( count > 0 && ( count & 1 ) === 0 ) {
+    if ( this.#current - 1 > 0 && ( this.#current - 1 & 1 ) === 0 ) {
       throw new SyntaxError( "Unexpected character" );
     }
 
@@ -233,9 +207,7 @@ class Grammar {
       throw new SyntaxError( "Unexpected character" );
     }
 
-    const count = ~this.#current;
-
-    if ( count === 0 || count % 4 === 3 ) {
+    if ( ~this.#current === 0 || ( ~this.#current & 3 ) === 3 ) {
       this.#current = this.#stack.pop()!;
 
       if ( this.#current === 0 ) {
@@ -249,11 +221,11 @@ class Grammar {
       return;
     }
 
-    if ( count % 4 === 0 ) {
+    if ( ( ~this.#current & 3 ) === 0 ) {
       throw new SyntaxError( "Expected double-quoted property name" );
     }
 
-    if ( count % 4 === 1 ) {
+    if ( ( ~this.#current & 3 ) === 1 ) {
       throw new SyntaxError( "Expected ':' after property name in object" );
     }
 
@@ -270,17 +242,15 @@ class Grammar {
       throw new SyntaxError( "Unexpected character" );
     }
 
-    const count = ~this.#current;
-
-    if ( count % 4 === 1 ) {
+    if ( ( ~this.#current & 3 ) === 1 ) {
       throw new SyntaxError( "Expected ':' after property name in object" );
     }
 
-    if ( count % 4 === 3 ) {
+    if ( ( ~this.#current & 3 ) === 3 ) {
       throw new SyntaxError( "Expected ',' or '}' after property value in object" );
     }
 
-    if ( count % 4 !== 0 ) {
+    if ( ( ~this.#current & 3 ) !== 0 ) {
       throw new SyntaxError( "Unexpected character" );
     }
 
@@ -298,9 +268,7 @@ class Grammar {
     }
 
     if ( this.#current > 0 ) {
-      const count = this.#current - 1;
-
-      if ( ( count & 1 ) !== 0 ) {
+      if ( ( this.#current - 1 & 1 ) !== 0 ) {
         throw new SyntaxError( "Expected ',' or ']' after array element" );
       }
 
@@ -311,21 +279,19 @@ class Grammar {
       throw new SyntaxError( "Unexpected character" );
     }
 
-    const count = ~this.#current;
-
-    if ( count === 0 ) {
+    if ( ~this.#current === 0 ) {
       throw new SyntaxError( "Expected property name or '}'" );
     }
 
-    if ( count % 4 === 0 ) {
+    if ( ( ~this.#current & 3 ) === 0 ) {
       throw new SyntaxError( "Expected double-quoted property name" );
     }
 
-    if ( count % 4 === 3 ) {
+    if ( ( ~this.#current & 3 ) === 3 ) {
       throw new SyntaxError( "Expected ',' or '}' after property value in object" );
     }
 
-    if ( count % 4 !== 1 ) {
+    if ( ( ~this.#current & 3 ) !== 1 ) {
       throw new SyntaxError( "Unexpected character" );
     }
 
@@ -349,29 +315,25 @@ class Grammar {
     }
 
     if ( this.#current > 0 ) {
-      const count = this.#current - 1;
-
-      if ( ( count & 1 ) !== 0 ) {
+      if ( ( this.#current - 1 & 1 ) !== 0 ) {
         throw new SyntaxError( "Expected ',' or ']' after array element" );
       }
 
       this.#current++;
     } else if ( this.#current < 0 ) {
-      const count = ~this.#current;
-
-      if ( count === 0 ) {
+      if ( ~this.#current === 0 ) {
         throw new SyntaxError( "Expected property name or '}'" );
       }
 
-      if ( count % 4 === 0 ) {
+      if ( ( ~this.#current & 3 ) === 0 ) {
         throw new SyntaxError( "Expected double-quoted property name" );
       }
 
-      if ( count % 4 === 1 ) {
+      if ( ( ~this.#current & 3 ) === 1 ) {
         throw new SyntaxError( "Expected ':' after property name in object" );
       }
 
-      if ( count % 4 === 3 ) {
+      if ( ( ~this.#current & 3 ) === 3 ) {
         throw new SyntaxError( "Expected ',' or '}' after property value in object" );
       }
 
@@ -394,29 +356,25 @@ class Grammar {
     }
 
     if ( this.#current > 0 ) {
-      const count = this.#current - 1;
-
-      if ( count === 0 || ( count & 1 ) === 0 ) {
+      if ( this.#current - 1 === 0 || ( this.#current - 1 & 1 ) === 0 ) {
         throw new SyntaxError( "Unexpected character" );
       }
 
       this.#current++;
     } else if ( this.#current < 0 ) {
-      const count = ~this.#current;
-
-      if ( count === 0 ) {
+      if ( ~this.#current === 0 ) {
         throw new SyntaxError( "Expected property name or '}'" );
       }
 
-      if ( count % 4 === 0 ) {
+      if ( ( ~this.#current & 3 ) === 0 ) {
         throw new SyntaxError( "Expected double-quoted property name" );
       }
 
-      if ( count % 4 === 1 ) {
+      if ( ( ~this.#current & 3 ) === 1 ) {
         throw new SyntaxError( "Expected ':' after property name in object" );
       }
 
-      if ( count % 4 !== 3 ) {
+      if ( ( ~this.#current & 3 ) !== 3 ) {
         throw new SyntaxError( "Unexpected character" );
       }
 
