@@ -6,7 +6,7 @@ Deno.test("[unit] grammar", async ( test ) => {
     const grammar = new Grammar();
 
     expect( grammar.depth ).toBe( 0 );
-    expect( grammar.ended ).toBe( false );
+    expect( grammar.done ).toBe( false );
     expect( grammar.type ).toBeUndefined();
     expect( grammar.step ).toBeUndefined();
     expect( grammar.index ).toBe( -1 );
@@ -14,7 +14,7 @@ Deno.test("[unit] grammar", async ( test ) => {
     grammar.stepValue();
 
     expect( grammar.depth ).toBe( 0 );
-    expect( grammar.ended ).toBe( true );
+    expect( grammar.done ).toBe( true );
     expect( grammar.type ).toBeUndefined();
 
     expect( () => grammar.stepValue() )
@@ -66,7 +66,7 @@ Deno.test("[unit] grammar", async ( test ) => {
     grammar.stepEndArray();
 
     expect( grammar.depth ).toBe( 0 );
-    expect( grammar.ended ).toBe( true );
+    expect( grammar.done ).toBe( true );
     expect( grammar.type ).toBeUndefined();
     expect( grammar.index ).toBe( -1 );
   });
@@ -81,7 +81,7 @@ Deno.test("[unit] grammar", async ( test ) => {
     grammar.stepEndArray();
 
     expect( grammar.depth ).toBe( 0 );
-    expect( grammar.ended ).toBe( true );
+    expect( grammar.done ).toBe( true );
   });
 
   await test.step("[scenario] array syntax violations", () => {
@@ -176,7 +176,7 @@ Deno.test("[unit] grammar", async ( test ) => {
     grammar.stepEndObject();
 
     expect( grammar.depth ).toBe( 0 );
-    expect( grammar.ended ).toBe( true );
+    expect( grammar.done ).toBe( true );
     expect( grammar.type ).toBeUndefined();
   });
 
@@ -190,7 +190,7 @@ Deno.test("[unit] grammar", async ( test ) => {
     grammar.stepEndObject();
 
     expect( grammar.depth ).toBe( 0 );
-    expect( grammar.ended ).toBe( true );
+    expect( grammar.done ).toBe( true );
   });
 
   await test.step("[scenario] object syntax violations", () => {
@@ -375,6 +375,6 @@ Deno.test("[unit] grammar", async ( test ) => {
     grammar.stepEndObject();
 
     expect( grammar.depth ).toBe( 0 );
-    expect( grammar.ended ).toBe( true );
+    expect( grammar.done ).toBe( true );
   });
 });

@@ -12,9 +12,9 @@ class Grammar {
   #current: number;
 
   /**
-   * Whether the JSON parsing has ended.
+   * Whether the top-level JSON value is complete.
    */
-  #ended: boolean;
+  #done: boolean;
 
   /**
    * The stack of previous state counters.
@@ -26,7 +26,7 @@ class Grammar {
    */
   constructor() {
     this.#current = 0;
-    this.#ended = false;
+    this.#done = false;
     this.#stack = [];
   }
 
@@ -38,10 +38,10 @@ class Grammar {
   }
 
   /**
-   * Get whether the JSON parsing has ended.
+   * Get whether the top-level JSON value is complete.
    */
-  get ended(): boolean {
-    return this.#ended;
+  get done(): boolean {
+    return this.#done;
   }
 
   /**
@@ -97,7 +97,7 @@ class Grammar {
   reset(): void {
     this.#current = 0;
     this.#stack.length = 0;
-    this.#ended = false;
+    this.#done = false;
   }
 
   /**
@@ -106,7 +106,7 @@ class Grammar {
    * @throws {SyntaxError} If an array cannot begin in the current grammar state.
    */
   stepBeginArray(): void {
-    if ( this.#current === 0 && this.#ended ) {
+    if ( this.#current === 0 && this.#done ) {
       throw new SyntaxError( "Unexpected non-whitespace character after JSON data" );
     }
 
@@ -142,7 +142,7 @@ class Grammar {
    * @throws {SyntaxError} If an object cannot begin in the current grammar state.
    */
   stepBeginObject(): void {
-    if ( this.#current === 0 && this.#ended ) {
+    if ( this.#current === 0 && this.#done ) {
       throw new SyntaxError( "Unexpected non-whitespace character after JSON data" );
     }
 
@@ -189,7 +189,7 @@ class Grammar {
     this.#current = this.#stack.pop()!;
 
     if ( this.#current === 0 ) {
-      this.#ended = true;
+      this.#done = true;
     } else if ( this.#current > 0 ) {
       this.#current++;
     } else if ( this.#current < 0 ) {
@@ -211,7 +211,7 @@ class Grammar {
       this.#current = this.#stack.pop()!;
 
       if ( this.#current === 0 ) {
-        this.#ended = true;
+        this.#done = true;
       } else if ( this.#current > 0 ) {
         this.#current++;
       } else if ( this.#current < 0 ) {
@@ -263,7 +263,7 @@ class Grammar {
    * @throws {SyntaxError} If a name separator is not expected in the current grammar state.
    */
   stepNameSeparator(): void {
-    if ( this.#current === 0 && this.#ended ) {
+    if ( this.#current === 0 && this.#done ) {
       throw new SyntaxError( "Unexpected non-whitespace character after JSON data" );
     }
 
@@ -305,11 +305,11 @@ class Grammar {
    */
   stepValue(): void {
     if ( this.#current === 0 ) {
-      if ( this.#ended ) {
+      if ( this.#done ) {
         throw new SyntaxError( "Unexpected non-whitespace character after JSON data" );
       }
 
-      this.#ended = true;
+      this.#done = true;
 
       return;
     }
@@ -348,7 +348,7 @@ class Grammar {
    */
   stepValueSeparator(): void {
     if ( this.#current === 0 ) {
-      if ( this.#ended ) {
+      if ( this.#done ) {
         throw new SyntaxError( "Unexpected non-whitespace character after JSON data" );
       }
 

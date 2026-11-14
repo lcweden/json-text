@@ -17,12 +17,12 @@ class Lexer {
   }
 
   /**
-   * Determine the JSON token type from its leading byte.
+   * Determine the JSON token kind from its leading byte.
    *
    * @param byte The leading byte of the token.
    * @returns The corresponding structural character or primitive value type, or `undefined` if unrecognized.
    */
-  static getType( byte: number ): JSONStructuralCharacter | JSONPrimitiveValue | undefined {
+  static getTokenKind( byte: number ): JSONStructuralCharacter | JSONPrimitiveValue | undefined {
     switch ( byte ) {
       case 0x7B /* { */:
         return "begin-object";

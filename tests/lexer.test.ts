@@ -4,31 +4,31 @@ import { expect } from "@std/expect";
 Deno.test("[unit] lexer", async ( test ) => {
   await test.step("[scenario] get token type", async ( test ) => {
     await test.step("[case] should identify structural characters", () => {
-      expect( Lexer.getType( 0x7B /* { */ ) ).toBe( "begin-object" );
-      expect( Lexer.getType( 0x7D /* } */ ) ).toBe( "end-object" );
-      expect( Lexer.getType( 0x5B /* [ */ ) ).toBe( "begin-array" );
-      expect( Lexer.getType( 0x5D /* ] */ ) ).toBe( "end-array" );
-      expect( Lexer.getType( 0x3A /* : */ ) ).toBe( "name-separator" );
-      expect( Lexer.getType( 0x2C /* , */ ) ).toBe( "value-separator" );
+      expect( Lexer.getTokenKind( 0x7B /* { */ ) ).toBe( "begin-object" );
+      expect( Lexer.getTokenKind( 0x7D /* } */ ) ).toBe( "end-object" );
+      expect( Lexer.getTokenKind( 0x5B /* [ */ ) ).toBe( "begin-array" );
+      expect( Lexer.getTokenKind( 0x5D /* ] */ ) ).toBe( "end-array" );
+      expect( Lexer.getTokenKind( 0x3A /* : */ ) ).toBe( "name-separator" );
+      expect( Lexer.getTokenKind( 0x2C /* , */ ) ).toBe( "value-separator" );
     });
 
     await test.step("[case] should identify primitive value leading bytes", () => {
-      expect( Lexer.getType( 0x22 /* " */ ) ).toBe( "string" );
-      expect( Lexer.getType( 0x74 /* t */ ) ).toBe( "true" );
-      expect( Lexer.getType( 0x66 /* f */ ) ).toBe( "false" );
-      expect( Lexer.getType( 0x6E /* n */ ) ).toBe( "null" );
-      expect( Lexer.getType( 0x2D /* - */ ) ).toBe( "number" );
+      expect( Lexer.getTokenKind( 0x22 /* " */ ) ).toBe( "string" );
+      expect( Lexer.getTokenKind( 0x74 /* t */ ) ).toBe( "true" );
+      expect( Lexer.getTokenKind( 0x66 /* f */ ) ).toBe( "false" );
+      expect( Lexer.getTokenKind( 0x6E /* n */ ) ).toBe( "null" );
+      expect( Lexer.getTokenKind( 0x2D /* - */ ) ).toBe( "number" );
 
       for ( let byte = 0x30 /* 0 */; byte <= 0x39 /* 9 */; byte++ ) {
-        expect( Lexer.getType( byte ) ).toBe( "number" );
+        expect( Lexer.getTokenKind( byte ) ).toBe( "number" );
       }
     });
 
     await test.step("[case] should return undefined for unrecognized bytes", () => {
-      expect( Lexer.getType( 0x20 /* [space] */ ) ).toBeUndefined();
-      expect( Lexer.getType( 0x2B /* + */ ) ).toBeUndefined();
-      expect( Lexer.getType( 0x61 /* a */ ) ).toBeUndefined();
-      expect( Lexer.getType( 0xFF ) ).toBeUndefined();
+      expect( Lexer.getTokenKind( 0x20 /* [space] */ ) ).toBeUndefined();
+      expect( Lexer.getTokenKind( 0x2B /* + */ ) ).toBeUndefined();
+      expect( Lexer.getTokenKind( 0x61 /* a */ ) ).toBeUndefined();
+      expect( Lexer.getTokenKind( 0xFF ) ).toBeUndefined();
     });
   });
 
